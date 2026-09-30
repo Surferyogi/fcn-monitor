@@ -2,19 +2,26 @@ import React from 'react'
 import Chart from './Chart.jsx'
 import { fmtNum, fmtPct } from './lib.js'
 
-const ARROW = { up: '▲', down: '▼' }
+const ICON = { up: '▲', down: '▼', flat: '▬', mixed: '◆' }
 
-function Trend({ label, value, detail }) {
+function TrendRow({ title, rule, value, detail }) {
   return (
-    <span className={`trend trend-${value || 'none'}`}>
-      <span>{label} {value ? `${ARROW[value]} ${value}` : 'n/a'}</span>
-      <span className="trend-detail">{detail}</span>
-    </span>
+    <div className={`trow trow-${value || 'none'}`}>
+      <div>
+        <div className="trow-title">{title}</div>
+        <div className="trow-rule">{rule}</div>
+      </div>
+      <div className="trow-val">
+        <div className="trow-label">{value ? `${ICON[value]} ${value.toUpperCase()}` : 'N/A'}</div>
+        <div className="trow-detail">{detail}</div>
+      </div>
+    </div>
   )
 }
 
-// One underlying: price vs strike vs KO with the room to each, trend labels, candlestick chart.
-export default function Rail({ u, isLaggard, quote }) {
+// One underlying: price vs strike vs KO with room to each, then the technical card.
+export default function Rail({ u, isLaggard, quote, trendRule }) {
+  const q = quote || {}
   return (
     <div className={`rail-row zone-${u.zone}${isLaggard ? ' laggard' : ''}`}>
       <div className="rail-head">
@@ -46,14 +53,12 @@ export default function Rail({ u, isLaggard, quote }) {
         </div>
       </div>
 
-      <div className="trends">
-        <Trend label="Mid-term" value={quote?.trendMid}
-          detail={quote?.emaFastW != null ? `50w EMA ${fmtNum(quote.emaFastW)} vs 150w ${fmtNum(quote.emaSlowW)}` : ''} />
-        <Trend label="Long-term" value={quote?.trendLong}
-          detail={quote?.ema200M != null ? `200m EMA ${fmtNum(quote.ema200M)} from ${fmtNum(quote.ema200MPrev)}` : ''} />
-      </div>
-
       <Chart quote={quote} strikeLevel={u.strikeLevel} koLevel={u.koLevel} />
+
+      <TrendRow title="Mid-term trend" rule={trendRule?.mid || ''} value={q.trendMid}
+        detail={q.slope50 != null ? `EMA50 ${fmtPct(q.slope50, 2)} · EMA150 ${fmtPct(q.slope150, 2)}` : ''} />
+      <TrendRow title="Long-term trend" rule={trendRule?.long || ''} value={q.trendLong}
+        detail={q.hhPct != null ? `highs ${fmtPct(q.hhPct, 2)} · lows ${fmtPct(q.llPct, 2)}` : ''} />
     </div>
   )
 }

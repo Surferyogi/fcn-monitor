@@ -38,7 +38,7 @@ export default function NoteCard({ note, quotes, trendRule }) {
 
       <div className="rails">
         {n.underlyings.map((u) => (
-          <Rail key={u.ticker} u={u} quote={quotes?.[u.ticker]} isLaggard={n.laggard?.ticker === u.ticker && n.underlyings.length > 1} />
+          <Rail key={u.ticker} u={u} quote={quotes?.[u.ticker]} trendRule={trendRule} isLaggard={n.laggard?.ticker === u.ticker && n.underlyings.length > 1} />
         ))}
       </div>
 
@@ -55,7 +55,8 @@ export default function NoteCard({ note, quotes, trendRule }) {
           <dt>Indicative FQ</dt><dd>{n.indicativeFQ}% — meaning not confirmed; check with RM</dd>
           <dt>Product ID</dt><dd>{n.productId}</dd>
           <dt>Risk rating</dt><dd>PRR {n.prr} of 5</dd>
-          <dt>Trend rule</dt><dd>{trendRule || 'not available'}</dd>
+          <dt>Mid-term rule</dt><dd>{trendRule?.midLong || 'not available'}</dd>
+          <dt>Long-term rule</dt><dd>{trendRule?.longLong || 'not available'}</dd>
           <dt>Reference prices</dt>
           <dd>{n.refProvisional ? `Provisional — ${n.refSource}` : 'Confirmed on this device'}</dd>
           <dt>Observation dates</dt>
