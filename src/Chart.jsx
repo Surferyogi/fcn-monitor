@@ -42,7 +42,7 @@ export default function Chart({ quote, strikeLevel, koLevel, defaultRange = '1Y'
   return (
     <div className="chart">
       <div className="chart-head">
-        <span className="chart-title">Technical <span className="chip">5Y daily</span></span>
+        <span className="chart-title">Technical <span className="chip">{range} daily</span></span>
         <span className="seg">
           <button className={range === '1Y' ? 'on' : ''} onClick={() => setRange('1Y')}>1Y</button>
           <button className={range === '5Y' ? 'on' : ''} onClick={() => setRange('5Y')}>5Y</button>
@@ -63,7 +63,7 @@ export default function Chart({ quote, strikeLevel, koLevel, defaultRange = '1Y'
       </svg>
       <div className="legend">
         {lines.map((l) => <span key={l.key} className={`lg lg-${l.key}`}>— {l.label}</span>)}
-        <span className="hint">{quote.barsTotal} daily bars</span>
+        <span className="hint">{n} daily bars · {dates[0]} → {dates[n - 1]}</span>
       </div>
     </div>
   )
