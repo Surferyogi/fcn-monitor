@@ -3,7 +3,7 @@ import NoteCard from './NoteCard.jsx'
 import { Ledger, Log, Settings } from './Panels.jsx'
 import { analyseNote, mergeNote, fmtDate } from './lib.js'
 
-export const APP_VERSION = 'v2026:Sep:30-14:42'
+export const APP_VERSION = 'v2026:Sep:30-15:22'
 
 const BASE = import.meta.env.BASE_URL
 const LS_OV = 'fcn.overrides'
@@ -71,7 +71,7 @@ export default function App() {
       </nav>
 
       <main>
-        {tab === 'notes' && (notes.length ? notes.map((n) => <NoteCard key={n.id} note={n} />) : <p className="hint">Loading…</p>)}
+        {tab === 'notes' && (notes.length ? notes.map((n) => <NoteCard key={n.id} note={n} quotes={prices?.quotes} trendRule={prices?.trendRule} />) : <p className="hint">Loading…</p>)}
         {tab === 'ledger' && <Ledger notes={notes} />}
         {tab === 'log' && <Log entries={log} notes={notes} onAdd={(e) => setLog([...log, e])} onRemove={(id) => setLog(log.filter((e) => e.id !== id))} />}
         {tab === 'settings' && rawNotes && (

@@ -28,25 +28,25 @@
    "2027-04-14"
   ],
   "refProvisional": true,
-  "refSource": "Yahoo Finance close 2026-09-30 — replace with initial fixing from confirmation",
+  "refSource": "Yahoo Finance close 2026-09-30 (trade date) — replace with initial fixing from confirmation",
   "underlyings": [
    {
     "ticker": "8306.T",
     "code": "8306",
     "name": "MUFG",
-    "ref": 3702.0
+    "ref": 3700.0
    },
    {
     "ticker": "8316.T",
     "code": "8316",
     "name": "SMFG",
-    "ref": 3479.0
+    "ref": 3471.0
    },
    {
     "ticker": "8411.T",
     "code": "8411",
     "name": "Mizuho",
-    "ref": 8888.0
+    "ref": 8855.0
    }
   ]
  },
@@ -79,19 +79,19 @@
    "2027-04-14"
   ],
   "refProvisional": true,
-  "refSource": "Yahoo Finance close 2026-09-30 — replace with initial fixing from confirmation",
+  "refSource": "Yahoo Finance close 2026-09-30 (trade date) — replace with initial fixing from confirmation",
   "underlyings": [
    {
     "ticker": "6501.T",
     "code": "6501",
     "name": "Hitachi",
-    "ref": 5505.0
+    "ref": 5489.0
    },
    {
     "ticker": "7011.T",
     "code": "7011",
     "name": "MHI",
-    "ref": 3851.0
+    "ref": 3839.0
    }
   ]
  }

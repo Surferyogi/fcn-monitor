@@ -73,20 +73,6 @@ p { margin: 0; }
 .tag-laggard { margin-left: 8px; font-size: 11px; color: var(--watch); background: var(--watch-soft); padding: 1px 6px; border-radius: 4px; font-weight: 500; }
 .rail-price { font-weight: 600; }
 .rail-chg { color: var(--muted); font-weight: 400; font-size: 13px; }
-.rail { display: block; width: 100%; height: 22px; margin: 4px 0 0; }
-.seg-breach { fill: var(--breach-soft); }
-.seg-mid { fill: var(--line); }
-.seg-ko { fill: var(--ko-soft); }
-.tick { fill: var(--muted); }
-.dot { fill: var(--ok); stroke: var(--surface); stroke-width: 0.8; }
-.zone-watch .dot { fill: var(--watch); }
-.zone-breach .dot { fill: var(--breach); }
-.zone-ko .dot { fill: var(--ko); }
-.rail-labels, .rail-dist { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
-.rail-dist { color: var(--ink); margin-top: 2px; }
-.zone-watch .rail-dist span:first-child { color: var(--watch); font-weight: 600; }
-.zone-breach .rail-dist span:first-child { color: var(--breach); font-weight: 600; }
-.zone-ko .rail-dist span:last-child { color: var(--ko); font-weight: 600; }
 
 .note-foot { display: flex; justify-content: space-between; align-items: baseline; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
 
@@ -124,9 +110,6 @@ p { margin: 0; }
 
 .bottom { display: flex; justify-content: space-between; gap: 10px; margin-top: 8px; font-size: 11px; color: var(--muted); }
 
-@media (prefers-reduced-motion: no-preference) {
-  .dot { transition: cx 300ms ease; }
-}
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #171C22; --surface: #1F262E; --ink: #E6EBF0; --muted: #98A4B0; --line: #313B46;
@@ -135,3 +118,40 @@ p { margin: 0; }
   }
   .log-form button { background: var(--ink); color: var(--surface); border-color: var(--ink); }
 }
+
+/* Levels strip: strike / now / KO */
+.levels { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 8px; }
+.lvl { display: flex; flex-direction: column; padding: 6px 8px; border-radius: 6px; background: var(--bg); }
+.lvl-name { font-size: 11px; color: var(--muted); }
+.lvl-val { font-size: 16px; font-weight: 600; }
+.lvl-room { font-size: 12px; color: var(--muted); }
+.lvl-now { background: var(--ok-soft); }
+.lvl-now .lvl-val { color: var(--ok); }
+.zone-watch .lvl-now { background: var(--watch-soft); } .zone-watch .lvl-now .lvl-val { color: var(--watch); }
+.zone-breach .lvl-now { background: var(--breach-soft); } .zone-breach .lvl-now .lvl-val { color: var(--breach); }
+.zone-ko .lvl-now { background: var(--ko-soft); } .zone-ko .lvl-now .lvl-val { color: var(--ko); }
+.zone-ko .lvl:last-child .lvl-room { color: var(--ko); font-weight: 600; }
+.zone-watch .lvl:first-child .lvl-room, .zone-breach .lvl:first-child .lvl-room { color: var(--breach); font-weight: 600; }
+
+.trends { display: flex; gap: 14px; margin-top: 8px; font-size: 13px; }
+.trend { color: var(--muted); }
+.trend-up { color: var(--ok); }
+.trend-down { color: var(--breach); }
+.trend-flat { color: var(--ink); }
+
+/* Candlestick chart */
+.chart { margin-top: 8px; }
+.chart-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { background: none; border: 0; padding: 3px 8px; font-size: 12px; color: var(--muted); cursor: pointer; }
+.seg button.on { background: var(--ink); color: var(--surface); }
+.candles { width: 100%; height: auto; display: block; }
+.candles .up line { stroke: var(--ok); stroke-width: 0.8; } .candles .up rect { fill: var(--ok); }
+.candles .down line { stroke: var(--breach); stroke-width: 0.8; } .candles .down rect { fill: var(--breach); }
+.candles .lvl-ko { stroke: var(--ko); stroke-width: 0.8; stroke-dasharray: 3 2; }
+.candles .lvl-strike { stroke: var(--breach); stroke-width: 0.8; stroke-dasharray: 3 2; }
+.candles .lvl-txt { font-size: 7px; fill: var(--muted); }
+.candles .lvl-txt.ko { fill: var(--ko); } .candles .lvl-txt.strike { fill: var(--breach); }
+.candles .ma { fill: none; stroke: var(--muted); stroke-width: 0.9; }
+.candles .ax { font-size: 7px; fill: var(--muted); } .candles .ax.end { text-anchor: end; }
+.chart-key { margin-top: 2px; font-size: 11px; }
