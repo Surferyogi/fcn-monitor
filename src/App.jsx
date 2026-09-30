@@ -3,7 +3,7 @@ import NoteCard from './NoteCard.jsx'
 import { Ledger, Log, Settings } from './Panels.jsx'
 import { analyseNote, mergeNote, fmtDate } from './lib.js'
 
-export const APP_VERSION = 'v2026:Sep:30-15:22'
+export const APP_VERSION = 'v2026:Sep:30-15:56'
 
 const BASE = import.meta.env.BASE_URL
 const LS_OV = 'fcn.overrides'

@@ -2,13 +2,13 @@ import React from 'react'
 import Chart from './Chart.jsx'
 import { fmtNum, fmtPct } from './lib.js'
 
-const ARROW = { up: '▲', flat: '▶', down: '▼' }
-const WORD = { up: 'up', flat: 'flat', down: 'down' }
+const ARROW = { up: '▲', down: '▼' }
 
-function Trend({ label, value }) {
+function Trend({ label, value, detail }) {
   return (
     <span className={`trend trend-${value || 'none'}`}>
-      {label} {value ? `${ARROW[value]} ${WORD[value]}` : 'n/a'}
+      <span>{label} {value ? `${ARROW[value]} ${value}` : 'n/a'}</span>
+      <span className="trend-detail">{detail}</span>
     </span>
   )
 }
@@ -47,8 +47,10 @@ export default function Rail({ u, isLaggard, quote }) {
       </div>
 
       <div className="trends">
-        <Trend label="Mid-term" value={quote?.trendMid} />
-        <Trend label="Long-term" value={quote?.trendLong} />
+        <Trend label="Mid-term" value={quote?.trendMid}
+          detail={quote?.emaFastW != null ? `50w EMA ${fmtNum(quote.emaFastW)} vs 150w ${fmtNum(quote.emaSlowW)}` : ''} />
+        <Trend label="Long-term" value={quote?.trendLong}
+          detail={quote?.ema200M != null ? `200m EMA ${fmtNum(quote.ema200M)} from ${fmtNum(quote.ema200MPrev)}` : ''} />
       </div>
 
       <Chart quote={quote} strikeLevel={u.strikeLevel} koLevel={u.koLevel} />

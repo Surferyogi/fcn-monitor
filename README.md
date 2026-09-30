@@ -8,7 +8,7 @@ Live at `https://surferyogi.github.io/fcn-monitor/` once deployed.
 
 - `public/data/notes.json` — the term-sheet fields (strike %, KO %, dates, notional). Edit this file to change a note.
 - `public/data/prices.json` — daily closes written by `scripts/fetch_prices.py` (Yahoo Finance via yfinance). GitHub Actions runs it at 11:30 and 16:00 JST on weekdays, commits the file, rebuilds and redeploys. There is no backend and no API key.
-- `prices.json` also carries daily OHLC (last ~270 bars), 50/200-day averages and a mid/long-term trend label computed by the rule at the top of `scripts/fetch_prices.py` (shown under each note's Terms).
+- `prices.json` also carries the last 26 weekly and 12 monthly candles plus EMAs. Trend labels follow the rule at the top of `scripts/fetch_prices.py` (shown under each note's Terms): mid-term = 50-week EMA above/below 150-week EMA; long-term = 200-month EMA rising/falling vs the prior month. EMAs use the full Yahoo history for each stock.
 - Reference prices and observation dates in `notes.json` are **provisional** (30 Sep 2026 closes; 14th of each month). Enter the confirmed initial fixings and dates under the Terms tab — those are saved in the browser on that device only.
 - Status log entries are also device-local (localStorage).
 

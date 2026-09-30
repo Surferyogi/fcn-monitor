@@ -1,4 +1,4 @@
-"""Fetch daily OHLC for every underlying in public/data/notes.json and write
+"""Fetch price history for every underlying in public/data/notes.json and write
 public/data/prices.json. Run by GitHub Actions on a schedule.
 Never invents data: if a ticker fails, the previous value is kept and flagged stale."""
 import json, sys, datetime as dt, pathlib
@@ -9,22 +9,27 @@ NOTES = ROOT / "public/data/notes.json"
 OUT = ROOT / "public/data/prices.json"
 
 # ---- Trend rule (single source of truth; shown verbatim in the app) ----
-MID_SMA, MID_SLOPE_DAYS, MID_SLOPE_PCT = 50, 20, 2.0
-LONG_SMA, LONG_SLOPE_DAYS, LONG_SLOPE_PCT = 200, 60, 3.0
+MID_FAST, MID_SLOW, MID_BARS = 50, 150, 26          # weekly EMAs, 26 weeks (~6 months) shown
+LONG_EMA, LONG_LOOKBACK, LONG_BARS = 200, 1, 12     # monthly EMA, slope vs 1 bar earlier, 12 months shown
 TREND_RULE = (
-    f"Mid-term: close vs {MID_SMA}-day average and its change over {MID_SLOPE_DAYS} trading days "
-    f"(up = above and rising ≥{MID_SLOPE_PCT}%, down = below and falling ≥{MID_SLOPE_PCT}%, else flat). "
-    f"Long-term: same with {LONG_SMA}-day average over {LONG_SLOPE_DAYS} days, ±{LONG_SLOPE_PCT}%."
+    f"Mid-term (weekly bars): up when the {MID_FAST}-week EMA is above the {MID_SLOW}-week EMA, down when below. "
+    f"Long-term (monthly bars): up when the {LONG_EMA}-month EMA is higher than {LONG_LOOKBACK} month earlier, down when lower. "
+    "EMAs are computed on the full available history; charts show the last "
+    f"{MID_BARS} weeks / {LONG_BARS} months."
 )
 
-def classify(close, sma, slope_pct, thr):
-    if close is None or sma is None or slope_pct is None:
-        return None
-    if close > sma and slope_pct >= thr:
-        return "up"
-    if close < sma and slope_pct <= -thr:
-        return "down"
-    return "flat"
+def bars(df, n):
+    df = df.tail(n)
+    return [[str(d.date()), round(float(o), 2), round(float(h), 2), round(float(l), 2), round(float(c), 2)]
+            for d, o, h, l, c in zip(df.index, df["Open"], df["High"], df["Low"], df["Close"])]
+
+def series(s, n):
+    return [None if pd.isna(v) else round(float(v), 2) for v in s.tail(n)]
+
+def flatten(h):
+    if isinstance(h.columns, pd.MultiIndex):
+        h.columns = h.columns.get_level_values(0)
+    return h.dropna(subset=["Close"])
 
 notes = json.loads(NOTES.read_text())
 tickers = sorted({u["ticker"] for n in notes for u in n["underlyings"]})
@@ -36,44 +41,42 @@ except Exception:
 quotes = {}
 for t in tickers:
     try:
-        h = yf.download(t, period="2y", progress=False, auto_adjust=True)
-        h = h.dropna(subset=[("Close", t)] if isinstance(h.columns, pd.MultiIndex) else ["Close"])
-        if isinstance(h.columns, pd.MultiIndex):
-            h.columns = h.columns.get_level_values(0)
-        c = h["Close"]
-        if len(c) < 2:
-            raise ValueError("no data")
+        d = flatten(yf.download(t, period="2y", interval="1d", progress=False, auto_adjust=True))
+        w = flatten(yf.download(t, period="max", interval="1wk", progress=False, auto_adjust=True))
+        m = flatten(yf.download(t, period="max", interval="1mo", progress=False, auto_adjust=True))
+        if len(d) < 2 or len(w) < MID_SLOW or len(m) < 2:
+            raise ValueError(f"insufficient data d={len(d)} w={len(w)} m={len(m)}")
+        c = d["Close"]
         r = np.log(c).diff().dropna()
-        r = r[r.abs() <= 0.35]  # drop unadjusted split artefacts from vol only
-        sma_m = c.rolling(MID_SMA).mean()
-        sma_l = c.rolling(LONG_SMA).mean()
-        def slope(s, n):
-            if len(s.dropna()) <= n:
-                return None
-            a, b = s.iloc[-1 - n], s.iloc[-1]
-            return None if pd.isna(a) or pd.isna(b) else float((b / a - 1) * 100)
-        close = float(c.iloc[-1])
-        smm = None if pd.isna(sma_m.iloc[-1]) else float(sma_m.iloc[-1])
-        sml = None if pd.isna(sma_l.iloc[-1]) else float(sma_l.iloc[-1])
-        slm, sll = slope(sma_m, MID_SLOPE_DAYS), slope(sma_l, LONG_SLOPE_DAYS)
+        r = r[r.abs() <= 0.35]
+        # weekly EMAs
+        w_fast = w["Close"].ewm(span=MID_FAST, adjust=False).mean()
+        w_slow = w["Close"].ewm(span=MID_SLOW, adjust=False).mean()
+        mid = "up" if w_fast.iloc[-1] > w_slow.iloc[-1] else "down"
+        # monthly EMA
+        m_ema = m["Close"].ewm(span=LONG_EMA, adjust=False).mean()
+        enough_m = len(m) >= LONG_EMA
+        long_ = None if len(m_ema) <= LONG_LOOKBACK else ("up" if m_ema.iloc[-1] > m_ema.iloc[-1 - LONG_LOOKBACK] else "down")
         tail = c.tail(252)
-        ohlc = h[["Open", "High", "Low", "Close"]].tail(270)
         quotes[t] = {
-            "close": round(close, 2),
+            "close": round(float(c.iloc[-1]), 2),
             "prevClose": round(float(c.iloc[-2]), 2),
             "date": str(c.index[-1].date()),
             "high52": round(float(tail.max()), 2),
             "low52": round(float(tail.min()), 2),
             "rv1m": round(float(r.tail(21).std() * np.sqrt(252) * 100), 1),
             "rv3m": round(float(r.tail(63).std() * np.sqrt(252) * 100), 1),
-            "sma50": None if smm is None else round(smm, 2),
-            "sma200": None if sml is None else round(sml, 2),
-            "sma50Slope": None if slm is None else round(slm, 2),
-            "sma200Slope": None if sll is None else round(sll, 2),
-            "trendMid": classify(close, smm, slm, MID_SLOPE_PCT),
-            "trendLong": classify(close, sml, sll, LONG_SLOPE_PCT),
-            "ohlc": [[str(d.date()), round(float(o), 2), round(float(hi), 2), round(float(lo), 2), round(float(cl), 2)]
-                     for d, o, hi, lo, cl in zip(ohlc.index, ohlc["Open"], ohlc["High"], ohlc["Low"], ohlc["Close"])],
+            "trendMid": mid,
+            "trendLong": long_,
+            "emaFastW": round(float(w_fast.iloc[-1]), 2),
+            "emaSlowW": round(float(w_slow.iloc[-1]), 2),
+            "ema200M": round(float(m_ema.iloc[-1]), 2),
+            "ema200MPrev": round(float(m_ema.iloc[-1 - LONG_LOOKBACK]), 2),
+            "monthsOfHistory": int(len(m)),
+            "weeksOfHistory": int(len(w)),
+            "longEmaFullyFormed": bool(enough_m),
+            "weekly": {"bars": bars(w, MID_BARS), "emaFast": series(w_fast, MID_BARS), "emaSlow": series(w_slow, MID_BARS)},
+            "monthly": {"bars": bars(m, LONG_BARS), "ema": series(m_ema, LONG_BARS)},
             "stale": False,
         }
     except Exception as e:
@@ -88,7 +91,7 @@ for t in tickers:
 
 out = {
     "fetchedAt": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
-    "source": "Yahoo Finance via yfinance, daily OHLC (auto-adjusted)",
+    "source": "Yahoo Finance via yfinance (auto-adjusted); daily closes, weekly and monthly bars",
     "trendRule": TREND_RULE,
     "quotes": quotes,
 }
